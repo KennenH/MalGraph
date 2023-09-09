@@ -265,7 +265,7 @@ def main_train_worker(local_rank: int, nprocs: int, train_params: TrainParams, m
 
 
 # https://hydra.cc/docs/tutorials/basic/your_first_app/defaults#overriding-a-config-group-default
-@hydra.main(config_path="../configs/", config_name="default.yaml")
+@hydra.main(config_path="../configs/", config_name="default.yaml", version_base=None)
 def main_app(config: DictConfig):
     # set seed for determinism for reproduction
     random.seed(config.Training.seed)

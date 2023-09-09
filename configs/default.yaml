@@ -1,6 +1,6 @@
 Data:
-  preprocess_root: "../data/processed_dataset/DatasetJSON/"
-  train_vocab_file: "../data/processed_dataset/train_external_function_name_vocab.jsonl"
+  preprocess_root: "/root/autodl-tmp/"
+  train_vocab_file: "/root/autodl-tmp/train_external_function_name_vocab.jsonl"
   max_vocab_size: 10000         # modify according to the result of 1BuildExternalVocab.py
 Training:
   cuda: True                    # enable GPU training if cuda is available

@@ -23,12 +23,15 @@ class MalwareDetectionDataset(Dataset):
             if os.path.splitext(name)[-1] == '.pt':
                 files.append(name)
         return files
-    
+
     def __len__(self):
         # def len(self):
         # return 201
         return len(self.malware_files) + len(self.benign_files)
-    
+
+    def len(self):
+        return len(self.malware_files) + len(self.benign_files)
+
     def get(self, idx):
         split = len(self.malware_files)
         # split = 100
