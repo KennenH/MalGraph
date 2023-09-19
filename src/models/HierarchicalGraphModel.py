@@ -129,7 +129,34 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
             in_x = out_x
         local_batch.x = in_x
         return local_batch
-    
+
+    # 基于多实例分解的CFG嵌入学习
+    def forward_MID_cfg_gnn(self, local_batch):
+        cfg_embeddings = []
+        # cfg_subgraph_loader是cfg(分解后的)列表，是二维的，每个元素都是一个acfg分解成的子图列表
+        cfg_subgraph_loader = local_batch.cfg_subgraph_loader
+        # 聚合子图的嵌入，用以表示原本的cfg
+        for acfg in cfg_subgraph_loader:
+            subgraph_embeddings = []
+            # 遍历当前cfg的子图列表，每个元素都是一个子图，它是一个Data对象
+            # 计算子图的嵌入
+            for subgraph in acfg:
+                in_x, edge_index = subgraph.x, subgraph.edge_index
+                for i in range(self.cfg_filter_length - 1):
+                    out_x = getattr(self, 'CFG_gnn_{}'.format(i + 1))(x=in_x, edge_index=edge_index)
+                    out_x = pt_f.relu(out_x, inplace=True)
+                    out_x = self.dropout(out_x)
+                    in_x = out_x
+                subgraph_embedding = torch.max(in_x, dim=0).values
+                subgraph_embeddings.append(subgraph_embedding)
+            cfg_embedding = torch.stack(subgraph_embeddings).mean(dim=0)
+            cfg_embeddings.append(cfg_embedding)
+
+        cfg_embeddings = torch.stack(cfg_embeddings)
+        local_batch.x = cfg_embeddings
+        return local_batch
+
+
     def aggregate_cfg_batch_pooling(self, local_batch: Batch):
         if self.pool == 'global_max_pool':
             x_pool = global_max_pool(x=local_batch.x, batch=local_batch.batch)
@@ -178,7 +205,7 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
     
     def forward(self, real_local_batch: Batch, real_bt_positions: list, bt_external_names: list, bt_all_function_edges: list, local_device: torch.device):
         
-        rtn_local_batch = self.forward_cfg_gnn(local_batch=real_local_batch)
+        rtn_local_batch = self.forward_MID_cfg_gnn(local_batch=real_local_batch)
         x_cfg_pool = self.aggregate_cfg_batch_pooling(local_batch=rtn_local_batch)
         
         # build the Function Call Graph (FCG) Data/Batch datasets

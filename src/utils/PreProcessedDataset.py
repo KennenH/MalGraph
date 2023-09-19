@@ -4,7 +4,7 @@ from datetime import datetime
 
 import torch
 from torch_geometric.data import Dataset, DataLoader
-from utils.RealBatch import create_real_batch_data  # noqa
+from src.utils.RealBatch import create_real_batch_data  # noqa
 
 
 class MalwareDetectionDataset(Dataset):
@@ -69,7 +69,8 @@ def _simulating(_dataset, _batch_size: int):
 
 
 if __name__ == '__main__':
-    root_path: str = '/home/xiang/MalGraph/data/processed_dataset/DatasetJSON/'
+    # root_path: str = '/root/autodl-tmp/'
+    root_path: str = 'D:\\hkn\\infected\\datasets\\proprecessed_pt'
     i_batch_size = 2
     
     train_dataset = MalwareDetectionDataset(root=root_path, train_or_test='train')
