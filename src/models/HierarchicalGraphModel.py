@@ -130,32 +130,33 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
         local_batch.x = in_x
         return local_batch
 
-    # 基于多实例分解的CFG嵌入学习
-    def forward_MID_cfg_gnn(self, local_batch):
+    # 多实例分解的CFG嵌入学习
+    def forward_MID_cfg_gnn(self, local_batch: Batch):
+        device = torch.device('cuda')
         cfg_embeddings = []
-        # cfg_subgraph_loader是cfg(分解后的)列表，是二维的，每个元素都是一个acfg分解成的子图列表
         cfg_subgraph_loader = local_batch.cfg_subgraph_loader
-        # 聚合子图的嵌入，用以表示原本的cfg
         for acfg in cfg_subgraph_loader:
             subgraph_embeddings = []
-            # 遍历当前cfg的子图列表，每个元素都是一个子图，它是一个Data对象
-            # 计算子图的嵌入
             for subgraph in acfg:
                 in_x, edge_index = subgraph.x, subgraph.edge_index
+                batch = torch.zeros(in_x.size(0), dtype=torch.long, device=device)
                 for i in range(self.cfg_filter_length - 1):
                     out_x = getattr(self, 'CFG_gnn_{}'.format(i + 1))(x=in_x, edge_index=edge_index)
                     out_x = pt_f.relu(out_x, inplace=True)
                     out_x = self.dropout(out_x)
                     in_x = out_x
-                subgraph_embedding = torch.max(in_x, dim=0).values
-                subgraph_embeddings.append(subgraph_embedding)
+                subgraph_embedding = global_mean_pool(in_x, batch)
+                subgraph_embeddings.append(subgraph_embedding.squeeze(0))
             cfg_embedding = torch.stack(subgraph_embeddings).mean(dim=0)
             cfg_embeddings.append(cfg_embedding)
 
         cfg_embeddings = torch.stack(cfg_embeddings)
-        local_batch.x = cfg_embeddings
+        # 创建一个新的 batch 向量
+        batch_size = cfg_embeddings.size(0)
+        new_batch = torch.arange(batch_size)
+        local_batch.x = cfg_embeddings.to(device)
+        local_batch.batch = new_batch.to(device)
         return local_batch
-
 
     def aggregate_cfg_batch_pooling(self, local_batch: Batch):
         if self.pool == 'global_max_pool':

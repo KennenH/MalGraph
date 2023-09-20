@@ -81,8 +81,6 @@ def multi_instance_decompose(acfg: Data):
     # g.add_edges_from(edge_index2edges(acfg.edge_index))
 
     return metis_MID(acfg)
-    # return structure_MID(acfg, g)
-    # return topological_MID(acfg, g)
 
 
 def metis_MID(acfg):

@@ -69,8 +69,8 @@ def _simulating(_dataset, _batch_size: int):
 
 
 if __name__ == '__main__':
-    # root_path: str = '/root/autodl-tmp/'
-    root_path: str = 'D:\\hkn\\infected\\datasets\\proprecessed_pt'
+    root_path: str = '/root/autodl-tmp/'
+    # root_path: str = 'D:\\hkn\\infected\\datasets\\proprecessed_pt'
     i_batch_size = 2
     
     train_dataset = MalwareDetectionDataset(root=root_path, train_or_test='train')
