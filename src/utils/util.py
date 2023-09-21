@@ -19,16 +19,26 @@ def transfer_remote():
                 shutil.copy(os.path.join(file_dir, file), os.path.join(dest_dir, str(index)))
                 index += 1
 
-    delete_all_remote()
+    delete_remote()
 
 
-def delete_all_remote():
+def delete_remote():
     samples_dir = '/root/autodl-tmp'
     sample = ['malware', 'benign']
     tags = ['test', 'train', 'valid']
     for s in sample:
         for t in tags:
             file_dir = os.path.join(samples_dir, '{}_{}'.format(t, s))
+            for f in os.listdir(file_dir):
+                os.remove(os.path.join(file_dir, f))
+
+
+def delete_remote_backup():
+    samples_dir = '/root/autodl-tmp'
+    dir_name = ['all', 'all_benign', 'one_family_malware', 'test_malware_backup', 'valid_malware_backup', 'train_malware_backup']
+    for name in dir_name:
+        file_dir = os.path.join(samples_dir, name)
+        if os.path.exists(file_dir):
             for f in os.listdir(file_dir):
                 os.remove(os.path.join(file_dir, f))
 
@@ -65,7 +75,7 @@ def split_samples(flag):
 
     os_list = os.listdir(path)
     random.shuffle(os_list)
-    # 8/1/1 分数据
+    # 6/2/2 分数据
     train_len = int(len(os_list) * 0.6)
     test_len = int(train_len / 3)
     for index, f in enumerate(os_list):
@@ -79,7 +89,9 @@ def split_samples(flag):
 
 
 if __name__ == '__main__':
+    # delete_remote_backup()
     # transfer_remote()
-    delete_all_remote()
+    # delete_remote()
+    split_samples('standard')
     split_samples('one_family')
     split_samples('benign')

@@ -13,6 +13,8 @@ sys.path.append("..")
 from utils.ParameterClasses import ModelParams  # noqa
 from utils.Vocabulary import Vocab  # noqa
 
+perform_MID = True
+
 
 def div_with_small_value(n, d, eps=1e-8):
     d = d * (d > eps).float() + eps * (d <= eps).float()
@@ -119,8 +121,11 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
     
     # self.last_activation = nn.Softmax(dim=1)
     # self.last_activation = nn.LogSoftmax(dim=1)
-    
+
     def forward_cfg_gnn(self, local_batch: Batch):
+        if perform_MID:
+            return self.forward_MID_cfg_gnn(local_batch)
+
         in_x, edge_index = local_batch.x, local_batch.edge_index
         for i in range(self.cfg_filter_length - 1):
             out_x = getattr(self, 'CFG_gnn_{}'.format(i + 1))(x=in_x, edge_index=edge_index)
@@ -138,7 +143,7 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
         for acfg in cfg_subgraph_loader:
             subgraph_embeddings = []
             for subgraph in acfg:
-                in_x, edge_index = subgraph.x, subgraph.edge_index
+                in_x, edge_index = subgraph.x.to(device), subgraph.edge_index.to(device)
                 batch = torch.zeros(in_x.size(0), dtype=torch.long, device=device)
                 for i in range(self.cfg_filter_length - 1):
                     out_x = getattr(self, 'CFG_gnn_{}'.format(i + 1))(x=in_x, edge_index=edge_index)
@@ -206,7 +211,7 @@ class HierarchicalGraphNeuralNetwork(nn.Module):
     
     def forward(self, real_local_batch: Batch, real_bt_positions: list, bt_external_names: list, bt_all_function_edges: list, local_device: torch.device):
         
-        rtn_local_batch = self.forward_MID_cfg_gnn(local_batch=real_local_batch)
+        rtn_local_batch = self.forward_cfg_gnn(local_batch=real_local_batch)
         x_cfg_pool = self.aggregate_cfg_batch_pooling(local_batch=rtn_local_batch)
         
         # build the Function Call Graph (FCG) Data/Batch datasets

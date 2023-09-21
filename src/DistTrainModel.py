@@ -15,9 +15,11 @@ from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 from prefetch_generator import BackgroundGenerator
 from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
 from torch import nn
 from torch_geometric.data import DataLoader
 from tqdm import tqdm
+from typing import List
 
 from models.HierarchicalGraphModel import HierarchicalGraphNeuralNetwork
 from utils.FunctionHelpers import write_into, params_print_log, find_threshold_with_fixed_fpr
@@ -95,7 +97,7 @@ def train_one_epoch(local_rank, train_loader, valid_loader, model, criterion, op
             _eval_flag = "Valid_In_Train_Epoch_{}_Batch_{}".format(idx_epoch, _idx_bt)
             valid_result = validate(local_rank=local_rank, valid_loader=valid_loader, model=model, criterion=criterion, evaluate_flag=_eval_flag, distributed=True, nprocs=nprocs,
                                     original_valid_length=original_valid_length, result_file=result_file, details=False)
-            
+
             if best_auc < valid_result.ROC_AUC_Score:
                 _info = "[AUC Increased!] In evaluation of epoch-{} / batch-{}: AUC increased from {:.5f} < {:.5f}! Saving the model into {}".format(idx_epoch,
                                                                                                                                                      _idx_bt,
@@ -246,7 +248,7 @@ def main_train_worker(local_rank: int, nprocs: int, train_params: TrainParams, m
         time_start = datetime.now()
         if local_rank == 0:
             write_into(log_result_file, "\n{} start of {}-epoch, init best_auc={}, start time={} {}".format("-" * 50, epoch, best_auc, time_start.strftime("%Y-%m-%d@%H:%M:%S"), "-" * 50))
-        
+
         smooth_avg_reduced_loss_list, best_auc = train_one_epoch(local_rank=local_rank, train_loader=train_loader, valid_loader=valid_loader, model=model, criterion=criterion,
                                                                  optimizer=optimizer, nprocs=nprocs, idx_epoch=epoch, best_auc=best_auc, best_model_file=best_model_path,
                                                                  original_valid_length=ori_valid_length, result_file=log_result_file)
